@@ -1,10 +1,14 @@
 # AbstractMem
 A library for Delphi/FreePascal to use as an automated storage simple to use, both memory and file mangament
+
 Work with **large amount** of data without thinking in load/save to disk, work always with data (**up to tons of bytes**) and library will load/save/cache it for you.
+
 Also, data can be indexed thanks to BTree automatic storage.
 
 This library was developed by Albert Molina for use at PascalCoin project (see https://github.com/PascalCoinDev/PascalCoin)
+
 At PascalCoin we needed a native and compileable source code for storage data of the PascalCoin blockchain
+
 Instead of use DLL's or third party software (like SQLite or similar) Albert developed a native storage-like library usefull that contains also some improvements in order to use **large amounts** of data without thinking in store on memory or save to disk. This process is automated. This is what makes "AbstractMem" a usefull library to use in Pascal language.
 
 ## Changelog
