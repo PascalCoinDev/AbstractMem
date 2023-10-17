@@ -57,6 +57,11 @@
 *.tvsconfig
 *.dsk
 
+# Extra not needed
+*.dproj
+*.lps
+*.bak
+
 # Delphi history and backups
 __history/
 __recovery/
