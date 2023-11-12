@@ -445,7 +445,7 @@ end;
 function TFileMem.Write(const APosition: Int64; const ABuffer; ASize: Integer) : Integer;
 begin
   if (Not Assigned(FCache)) Or (FIsFlushingCache) then begin
-    inherited;
+    Result := inherited;
     Exit;
   end;
 
@@ -453,6 +453,7 @@ begin
   FLock.Acquire;
   try
     FCache.SaveToCache(ABuffer,ASize,APosition,True);
+    Result := ASize;
   finally
     FLock.Release;
   end;

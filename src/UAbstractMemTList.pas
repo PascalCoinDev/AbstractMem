@@ -103,8 +103,13 @@ type
     class function MinAbstractMemTListHeaderSize(AAbstractMem : TAbstractMem) : Integer;
   End;
 
+  TAbstractMemTListLoadFrom<T> = procedure(const ABytes : TBytes; var AItem : T);
+  TAbstractMemTListSaveTo<T> = procedure(const AItem : T; AIsAddingItem : Boolean; var ABytes : TBytes);
+
   TAbstractMemTListBaseAbstract<T> = Class
   private
+    FOnLoadFrom : TAbstractMemTListLoadFrom<T>;
+    FOnSaveTo : TAbstractMemTListSaveTo<T>;
     FAbstractMem: TAbstractMem;
     function GetInitialZone: TAMZone;
     function GetUseCache : Boolean;
@@ -114,10 +119,10 @@ type
     // POSSIBLE OVERRIDE METHODS
     function GetItem(index : Integer) : T; virtual;
     procedure SetItem(index : Integer; const AItem : T); virtual;
-    function ToString(const AItem : T) : String; overload; virtual;
+    function ToString(const AItem : T) : String; reintroduce; overload; virtual;
     // ABSTRACT METHODS NEED TO OVERRIDE
-    procedure LoadFrom(const ABytes : TBytes; var AItem : T); virtual; abstract;
-    procedure SaveTo(const AItem : T; AIsAddingItem : Boolean; var ABytes : TBytes); virtual; abstract;
+    procedure LoadFrom(const ABytes : TBytes; var AItem : T); virtual;
+    procedure SaveTo(const AItem : T; AIsAddingItem : Boolean; var ABytes : TBytes); virtual;
   public
     Constructor Create(AAbstractMem : TAbstractMem; const AInitialZone : TAMZone; ADefaultElementsPerBlock : Integer; AUseCache : Boolean); virtual;
     Destructor Destroy; override;
@@ -133,6 +138,8 @@ type
     property AbstractMem : TAbstractMem read FAbstractMem;
     property InitialiZone : TAMZone read GetInitialZone;
     property UseCache : Boolean read GetUseCache write SetUseCache;
+    property OnLoadFrom : TAbstractMemTListLoadFrom<T> read FOnLoadFrom write FOnLoadFrom;
+    property OnSaveTo : TAbstractMemTListSaveTo<T> read FOnSaveTo write FOnSaveTo;
   End;
 
 
@@ -180,7 +187,7 @@ end;
 procedure TAbstractMemTList.AddRange(AIndexStart, AInsertCount: Integer);
 var LElements : TBytes;
   LBlockPointer,LPreviousBlockPointer : TAbstractMemPosition;
-  LIndexInBlock, i, j, n : Integer;
+  LIndexInBlock, i, j, n, k : Integer;
 begin
   CheckInitialized;
   if (AIndexStart<0) or (AInsertCount<=0) or (AIndexStart>FNextElementIndex) then raise EAbstractMemTList.Create(Format('%s AddRange %d..%d out of range 0..%d',[ClassName,AIndexStart,AIndexStart+AInsertCount,FNextElementIndex-1]));
@@ -193,9 +200,12 @@ begin
     end;
     FCacheUpdated := True;
     Inc(FCacheDataUsedBytes,(AInsertCount*FAbstractMem.SizeOfAbstractMemPosition));
-    Move(FCacheData[AIndexStart*FAbstractMem.SizeOfAbstractMemPosition],
+    k := FCacheDataUsedBytes-((AIndexStart+AInsertCount)*FAbstractMem.SizeOfAbstractMemPosition);
+    if k <> 0 then begin
+      Move(FCacheData[AIndexStart*FAbstractMem.SizeOfAbstractMemPosition],
          FCacheData[(AIndexStart+AInsertCount)*FAbstractMem.SizeOfAbstractMemPosition],
-         FCacheDataUsedBytes-((AIndexStart+AInsertCount)*FAbstractMem.SizeOfAbstractMemPosition));
+         k);
+    end;
     Inc(FNextElementIndex,AInsertCount);
     Exit;
   end;
@@ -695,6 +705,8 @@ constructor TAbstractMemTListBaseAbstract<T>.Create(AAbstractMem: TAbstractMem;
   const AInitialZone: TAMZone; ADefaultElementsPerBlock: Integer; AUseCache : Boolean);
 begin
   FAbstractMem := AAbstractMem;
+  FOnLoadFrom := Nil;
+  FOnSaveTo := Nil;
   FList := TAbstractMemTList.Create(AAbstractMem,AInitialZone,ADefaultElementsPerBlock,AUseCache);
 end;
 
@@ -763,6 +775,18 @@ begin
   finally
     FList.UnlockList;
   end;
+end;
+
+procedure TAbstractMemTListBaseAbstract<T>.LoadFrom(const ABytes: TBytes; var AItem: T);
+begin
+  if Assigned(FOnLoadFrom) then FOnLoadFrom(ABytes,AItem)
+  else raise EAbstractMemTList.Create(Self.ClassName+'.LoadFrom not overrided or OnLoadFrom not assigned');
+end;
+
+procedure TAbstractMemTListBaseAbstract<T>.SaveTo(const AItem: T; AIsAddingItem: Boolean; var ABytes: TBytes);
+begin
+  if Assigned(FOnSaveTo) then FOnSaveTo(AItem,AIsAddingItem,ABytes)
+  else raise EAbstractMemTList.Create(Self.ClassName+'.SaveTo not overrided or OnSaveTo not assigned');
 end;
 
 procedure TAbstractMemTListBaseAbstract<T>.SetItem(index: Integer;

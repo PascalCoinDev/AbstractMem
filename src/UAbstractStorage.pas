@@ -161,7 +161,7 @@ begin
     
     AInfo.Add(Format('%s name:"%s" version:%d',[ClassName,Self.StorageName,Self.StorageVersion]));
     if AbstractMem.Is64Bits then s:='64bits' else s:='32bits';
-    AInfo.Add(Format('AbstractMem %s %d bytes per unit total size %d',[s,AbstractMem.MemUnitsSize,AbstractMem.MaxAvailablePos]));
+    AInfo.Add(Format('AbstractMem %s %d bytes per unit total size %d',[s,AbstractMem.MemUnitsSize,AbstractMem.NextAvailablePos]));
     AInfo.Add(Format('StorageStructs: %d',[StorageStructInformation.Count]));
     if StorageStructInformation.FindDataLowest(ss) then begin
       repeat
@@ -217,12 +217,10 @@ const
   CT_HEADER = 'TAbstractStorage';
   CT_VERSION = 1;
 
-var LfdZone, LssZone : TAMZone;
-  i : Integer;
-  LBytesStorage : TBytesStorage;
-  s : String;
-begin
-  if AClearContent then begin
+  procedure DoClearContent;
+  var LfdZone, LssZone : TAMZone;
+    LBytesStorage : TBytesStorage;
+  begin
     FreeAndNil(FStorageStructInformation);
     AbstractMem.ClearContent(AIs64Bits,AMemUnitsSize);
     //
@@ -242,6 +240,14 @@ begin
     if Assigned(AOnInitalizeStorage) then begin
       AOnInitalizeStorage(Self,'',ANewStorageName,0,ANewStorageVersion);
     end;
+  end;
+var LfdZone : TAMZone;
+  i : Integer;
+  LBytesStorage : TBytesStorage;
+  s : String;
+begin
+  if AClearContent then begin
+    DoClearContent;
   end;
   //
   FreeAndNil(FStorageStructInformation);
@@ -269,6 +275,10 @@ begin
       end;
     end else begin
       FIsStorage := is_empty;
+      if (Not FAbstractMem.ReadOnly) and (Assigned(AOnInitalizeStorage)) then begin
+        DoClearContent;
+        FIsStorage := is_initialized;
+      end;
     end;
   Finally
     LBytesStorage.Free;

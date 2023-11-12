@@ -81,9 +81,16 @@
   Version 2.0 - October 2023
   - Published as a Github project at https://github.com/PascalCoinDev/AbstractMem
 
+  Version 2.1 - 2023-11-12
+  - Added OnLoad/OnSave methods properties to allow use of direct Classes without need to create a new inherited class
+    - TAbstractMemBTreeDataAbstract<TBTreeData>.OnLoadData
+    - TAbstractMemBTreeDataAbstract<TBTreeData>.OnSaveData
+    - TAbstractMemTList<TData>.OnLoadFrom
+    - TAbstractMemTList<TData>.OnSaveTo
+  - Some compilation warnings/hints fixed
 }
 
 const
-  CT_ABSTRACTMEM_VERSION = 2.0; // Each revision should increase this version...
+  CT_ABSTRACTMEM_VERSION = 2.1; // Each revision should increase this version...
 
 

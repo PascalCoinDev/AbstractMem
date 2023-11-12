@@ -102,6 +102,9 @@ type
   TAbstractMemBTreeDataIndex<TBTreeData> = Class;
   {$ENDIF}
 
+  TAbstractMemBTreeDataLoad<TData> = function(const APosition : TAbstractMemPosition) : TData;
+  TAbstractMemBTreeDataSave<TData> = function(const AData : TData) : TAMZone;
+
   TAbstractMemBTreeDataAbstract<TBTreeData> = Class(TAbstractMemBTree)
   private
     var
@@ -110,11 +113,13 @@ type
     FLeft_Data, FRight_Data : TBTreeData;
     FSearchTarget : TBTreeData;
     FOnCompareAbstractMemData: TComparison<TBTreeData>;
+    FOnLoadData: TAbstractMemBTreeDataLoad<TBTreeData>;
+    FOnSaveData: TAbstractMemBTreeDataSave<TBTreeData>;
   protected
     function DoCompareData(const ALefTBTreeData, ARighTBTreeData: TAbstractMemPosition): Integer; override;
     //
-    function LoadData(const APosition : TAbstractMemPosition) : TBTreeData; virtual; abstract;
-    function SaveData(const AData : TBTreeData) : TAMZone; virtual; abstract;
+    function LoadData(const APosition : TAbstractMemPosition) : TBTreeData; virtual;
+    function SaveData(const AData : TBTreeData) : TAMZone; virtual;
     function GetCopyOfData(Const AData : TBTreeData) : TBTreeData;  virtual;
     procedure DoOnFindProcessStart; override;
     procedure DoOnFindProcessEnd; override;
@@ -136,6 +141,8 @@ type
     function FindDataSuccessor(const AData : TBTreeData; var ASuccessor : TBTreeData) : Boolean;
     function FindDataLowest(out ALowest : TBTreeData) : Boolean;
     function FindDataHighest(out AHighest : TBTreeData) : Boolean;
+    property OnLoadData : TAbstractMemBTreeDataLoad<TBTreeData> read FOnLoadData write FOnLoadData;
+    property OnSaveData : TAbstractMemBTreeDataSave<TBTreeData> read FOnSaveData write FOnSaveData;
   End;
 
   TAbstractMemBTreeData<TBTreeData> = Class(TAbstractMemBTreeDataAbstract<TBTreeData>)
@@ -591,6 +598,8 @@ begin
   FOnCompareAbstractMemData := AOnCompareAbstractMemDataMethod;
   FLeft_Pos  := 0;
   FRight_Pos := 0;
+  FOnLoadData := Nil;
+  FOnSaveData := Nil;
 end;
 
 procedure TAbstractMemBTreeDataAbstract<TBTreeData>.Delete;
@@ -776,6 +785,18 @@ end;
 function TAbstractMemBTreeDataAbstract<TBTreeData>.GetData(const APosition: TAbstractMemPosition): TBTreeData;
 begin
   Result := GetCopyOfData(LoadData(APosition));
+end;
+
+function TAbstractMemBTreeDataAbstract<TBTreeData>.LoadData(const APosition: TAbstractMemPosition): TBTreeData;
+begin
+  if Assigned(FOnLoadData) then Result := FOnLoadData(APosition)
+  else raise EAbstractMemBTree.Create(Self.ClassName+'.LoadData not overrided or OnLoadData not assigned');
+end;
+
+function TAbstractMemBTreeDataAbstract<TBTreeData>.SaveData(const AData: TBTreeData): TAMZone;
+begin
+  if Assigned(FOnSaveData) then Result := FOnSaveData(AData)
+  else raise EAbstractMemBTree.Create(Self.ClassName+'.SaveData not overrided or OnSaveData not assigned');
 end;
 
 { TAbstractMemBTreeData<TBTreeData> }

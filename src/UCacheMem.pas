@@ -708,7 +708,7 @@ begin
   Result := Nil;
   PRight := Nil;
   if ASize<0 then raise ECacheMem.Create(Format('Invalid load size %d',[ASize]));
-  if ASize=0 then Exit(0);
+  if ASize=0 then Exit(Nil);
 
   if (FindCacheMemDataByPosition(AStartPos,PCurrent)) then begin
     if (PCurrent^.GetEndPos >= (AStartPos + ASize -1)) then begin

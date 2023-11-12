@@ -113,7 +113,7 @@ type
     function Exists(const AData : T) : Boolean;
     procedure Clear;
     function TreeToString: String;
-    function ToString(const AData : T) : String; overload; virtual;
+    function ToString(const AData : T) : String; reintroduce; overload; virtual;
     property MaxRegisters : Integer read FMaxRegisters write FMaxRegisters;
     property Stats : TAVLCacheStats read FStats;
   End;

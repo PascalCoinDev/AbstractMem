@@ -113,7 +113,7 @@ type
   public
     property AllowDuplicates : Boolean read FAllowDuplicates write FAllowDuplicates;
     function IsNil(const AIdentify : TIdentify) : Boolean; virtual; abstract;
-    function ToString(const ANode : TAbstractBTreeNode) : String; overload;
+    function ToString(const ANode : TAbstractBTreeNode) : String; reintroduce; overload; virtual;
     procedure EraseTree;
     //
     property Root: TAbstractBTreeNode read GetRoot;
