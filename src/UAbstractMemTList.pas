@@ -154,8 +154,9 @@ type
   private
     FAllowDuplicates : Boolean;
   protected
-    // ABSTRACT METHODS NEED TO OVERRIDE
-    function Compare(const ALeft, ARight : T) : Integer; virtual; abstract;
+    FOnCompare: TComparison<T>;
+    //
+    function Compare(const ALeft, ARight : T) : Integer; virtual;
   public
     Constructor Create(AAbstractMem : TAbstractMem; const AInitialZone : TAMZone; ADefaultElementsPerBlock : Integer; AAllowDuplicates, AUseCache : Boolean); reintroduce;
     function Find(const AItemToFind : T; out AIndex : Integer) : Boolean;
@@ -164,6 +165,7 @@ type
     function IndexOf(const AItem : T) : Integer;
     property AllowDuplicates : Boolean read FAllowDuplicates;
     function Get(index : Integer) : T;
+    property OnCompare : TComparison<T> read FOnCompare write FOnCompare;
   End;
 
 implementation
@@ -874,10 +876,17 @@ begin
   end;
 end;
 
+function TAbstractMemOrderedTList<T>.Compare(const ALeft, ARight: T): Integer;
+begin
+  if Assigned(FOnCompare) then Result := FOnCompare(ALeft,ARight)
+  else raise EAbstractMemTList.Create(Self.ClassName+'.Compare not overrided or OnCompare not assigned');
+end;
+
 constructor TAbstractMemOrderedTList<T>.Create(AAbstractMem: TAbstractMem;
   const AInitialZone: TAMZone; ADefaultElementsPerBlock: Integer;
   AAllowDuplicates, AUseCache: Boolean);
 begin
+  FOnCompare := Nil;
   inherited Create(AAbstractMem, AInitialZone, ADefaultElementsPerBlock, AUseCache);
   FAllowDuplicates := AAllowDuplicates;
 end;

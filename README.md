@@ -34,7 +34,7 @@ At this moment this library is only used for myself on PascalCoin project, so do
 ```
   This file is part of AbstractMem framework
 
-  Copyright (C) 2020-2021 Albert Molina - bpascalblockchain@gmail.com
+  Copyright (C) 2020-2023 Albert Molina - bpascalblockchain@gmail.com
 
   https://github.com/PascalCoinDev/
 
