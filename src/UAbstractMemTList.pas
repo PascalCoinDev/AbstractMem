@@ -146,6 +146,7 @@ type
   TAbstractMemTList<T> = Class(TAbstractMemTListBaseAbstract<T>)
   public
     property Item[index : Integer] : T read GetItem write SetItem;
+    property Items[index : Integer] : T read GetItem; default; // For TList class compatibility
   End;
 
   { TAbstractMemOrderedTList }
@@ -162,6 +163,7 @@ type
     function Find(const AItemToFind : T; out AIndex : Integer) : Boolean;
     Function Add(const AItem : T) : Integer; reintroduce;
     property Item[index : Integer] : T read GetItem;
+    property Items[index : Integer] : T read GetItem; default; // For TList class compatibility
     function IndexOf(const AItem : T) : Integer;
     property AllowDuplicates : Boolean read FAllowDuplicates;
     function Get(index : Integer) : T;

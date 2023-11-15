@@ -102,8 +102,8 @@ type
   TAbstractMemBTreeDataIndex<TBTreeData> = Class;
   {$ENDIF}
 
-  TAbstractMemBTreeDataLoad<TData> = function(const APosition : TAbstractMemPosition) : TData;
-  TAbstractMemBTreeDataSave<TData> = function(const AData : TData) : TAMZone;
+  TAbstractMemBTreeDataLoad<TData> = function(AAbstractMem : TAbstractMem; const APosition : TAbstractMemPosition) : TData;
+  TAbstractMemBTreeDataSave<TData> = function(AAbstractMem : TAbstractMem; const AData : TData) : TAMZone;
 
   TAbstractMemBTreeDataAbstract<TBTreeData> = Class(TAbstractMemBTree)
   private
@@ -170,6 +170,8 @@ type
     {$ENDIF}
     FBTreeDataCache : TAVLABTreeDataCache;
     function CacheCompareBTreeData(const ALeft,ARight : TAVLCache<TAVLABTreeDataCacheData>.PAVLCacheMemData) : Integer;
+    procedure SetUseCache(const Value: Boolean);
+    function GetUseCache: Boolean;
   protected
     function GetData(const APosition : TAbstractMemPosition) : TBTreeData; override;
     procedure DisposeData(var AData : TAbstractMemPosition); override;
@@ -190,6 +192,7 @@ type
     {$ENDIF}
     procedure CheckConsistency; override;
     property BTreeDataCache : TAVLABTreeDataCache read FBTreeDataCache;
+    property UseCache : Boolean read GetUseCache write SetUseCache;
   End;
 
   TAbstractMemBTreeDataIndex<TBTreeData> = Class(TAbstractMemBTreeDataAbstract<TBTreeData>)
@@ -789,13 +792,13 @@ end;
 
 function TAbstractMemBTreeDataAbstract<TBTreeData>.LoadData(const APosition: TAbstractMemPosition): TBTreeData;
 begin
-  if Assigned(FOnLoadData) then Result := FOnLoadData(APosition)
+  if Assigned(FOnLoadData) then Result := FOnLoadData(AbstractMem,APosition)
   else raise EAbstractMemBTree.Create(Self.ClassName+'.LoadData not overrided or OnLoadData not assigned');
 end;
 
 function TAbstractMemBTreeDataAbstract<TBTreeData>.SaveData(const AData: TBTreeData): TAMZone;
 begin
-  if Assigned(FOnSaveData) then Result := FOnSaveData(AData)
+  if Assigned(FOnSaveData) then Result := FOnSaveData(AbstractMem,AData)
   else raise EAbstractMemBTree.Create(Self.ClassName+'.SaveData not overrided or OnSaveData not assigned');
 end;
 
@@ -1032,9 +1035,30 @@ begin
 end;
 {$ENDIF}
 
+function TAbstractMemBTreeData<TBTreeData>.GetUseCache: Boolean;
+begin
+  Result := Assigned(FBTreeDataCache);
+end;
+
 function TAbstractMemBTreeData<TBTreeData>.IndexesCount: Integer;
 begin
   Result := FIndexes.Count;
+end;
+
+procedure TAbstractMemBTreeData<TBTreeData>.SetUseCache(const Value: Boolean);
+begin
+  if GetUseCache=Value then Exit;
+  if Not Value then FreeAndNil(FBTreeDataCache)
+  else begin
+    {$IFDEF FPC}
+    //    Ref: 20211126-1  -- TODO
+    //    FPC (Tested on 3.2.0) does not allow use "CacheCompareBTreeData" for problems withs generics...
+    //    Nedd to deeply search why or to test on futures releases...
+    FBTreeDataCache := Nil;
+    {$ELSE}
+    FBTreeDataCache :=  TAVLABTreeDataCache.Create(100000,CacheCompareBTreeData);
+    {$ENDIF}
+  end;
 end;
 
 { TAbstractMemBTreeDataIndex<TBTreeData> }

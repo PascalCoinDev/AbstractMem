@@ -143,6 +143,7 @@ Type
     procedure Dispose(const AAMZone : TAMZone); overload;
     procedure Dispose(const APosition : TAbstractMemPosition); overload;
     function GetUsedZoneInfo(const APosition : TAbstractMemPosition; ACheckForUsedZone : Boolean; out AAMZone : TAMZone) : Boolean;
+    function ReadUsedZone(const APosition : TAbstractMemPosition; ACheckForUsedZone : Boolean; out ABytes : TBytes) : Boolean;
     function ToString : String; override;
     function CheckConsistency(const AStructure : TStrings; const AAbstractMemZoneInfoList : TList<TAbstractMemZoneInfo>; out ATotalUsedSize, ATotalUsedBlocksCount, ATotalLeaksSize, ATotalLeaksBlocksCount : Int64) : Boolean; overload;
     procedure CheckConsistency; overload;
@@ -795,6 +796,14 @@ begin
       end;
     end;
   end;
+end;
+
+function TAbstractMem.ReadUsedZone(const APosition: TAbstractMemPosition; ACheckForUsedZone: Boolean; out ABytes: TBytes): Boolean;
+var amz : TAMZone;
+begin
+  if not GetUsedZoneInfo(APosition,ACheckForUsedZone,amz) then Exit(False);
+  SetLength(ABytes,amz.size);
+  Result := Read(amz.position,ABytes[0],amz.size) = amz.size;
 end;
 
 function TAbstractMem.RoundSize(ASize: TAbstractMemSize): TAbstractMemSize;
