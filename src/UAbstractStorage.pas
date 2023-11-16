@@ -505,9 +505,11 @@ begin
   try
     l := ReadUInt16;
     if (l<0) then raise EAbstractStorage.Create(Format('%s.ReadString Invalid Length %d for String',[Self.ClassName, l]));
-    CheckRead(l);
-    Result := TEncoding.ANSI.GetString(FBytes,FPosition,l);
-    inc(FPosition,l);
+    if (l>0) then begin
+      CheckRead(l);
+      Result := TEncoding.ANSI.GetString(FBytes,FPosition,l);
+      inc(FPosition,l);
+    end;
   Except
     FPosition := LPos;
     Raise;
