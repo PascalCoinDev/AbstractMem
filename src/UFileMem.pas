@@ -62,6 +62,7 @@ type
     FIsStableCache: Boolean;
     FIsFlushingCache : Boolean;
     FIncreaseFileBytes: Int64;
+    FAutoSaveCache: Boolean;
     {$IFDEF ABSTRACTMEM_ENABLE_STATS}
     FStats : TFileMemStats;
     {$ENDIF}
@@ -84,6 +85,7 @@ type
     function AbsoluteRead(const AAbsolutePosition : Int64; var ABuffer; ASize : Integer) : Integer; override;
     procedure DoIncreaseSize(var ANextAvailablePos, AMaxAvailablePos : Int64; ANeedSize : Integer); override;
     function IsAbstractMemInfoStable : Boolean; override;
+    procedure DoFinalizeUpdate; override;
   public
     Constructor Create(const AFileName : String; AReadOnly : Boolean); reintroduce;
     Destructor Destroy; override;
@@ -109,6 +111,7 @@ type
     function GetStatsReport(AClearStats : Boolean) : String; override;
     {$ENDIF}
     property IncreaseFileBytes : Int64 read FIncreaseFileBytes write SetIncreaseFileBytes;
+    property AutoSaveCache : Boolean read FAutoSaveCache write FAutoSaveCache;
   End;
 
 implementation
@@ -184,6 +187,7 @@ begin
   FStats.IncreaseSizeCount := 0;
   FStats.IncreaseSizeBytesCount := 0;
   {$ENDIF}
+  FAutoSaveCache := True;
   FIsStableCache := True;
   FIsFlushingCache := False;
   FFileName := AFileName;
@@ -211,6 +215,15 @@ begin
   inherited;
   FreeAndNil(FFileStream);
   FreeAndNil(FCache);
+end;
+
+procedure TFileMem.DoFinalizeUpdate;
+begin
+  inherited;
+  if (Not FAutoSaveCache) or (FUpdateCount>0) Or (ReadOnly) then Exit;
+  // Call to flush cache
+  if (Not FIsStableCache) and
+    (Not FIsFlushingCache) then FlushCache;
 end;
 
 procedure TFileMem.DoIncreaseSize(var ANextAvailablePos, AMaxAvailablePos: Int64; ANeedSize: Integer);
@@ -252,6 +265,7 @@ begin
     {$ENDIF}
   end else AMaxAvailablePos := FFileStream.Size;
   CacheIsNOTStable;
+  DoFinalizeUpdate; // Will autosavecache if necessary
 end;
 
 function TFileMem.FlushCache: Boolean;

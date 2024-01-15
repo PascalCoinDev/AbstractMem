@@ -119,6 +119,7 @@ Type
     function IsValidUsedSize(ASize : TAbstractMemSize) : Boolean;
   protected
     FLock : TCriticalSection;
+    FUpdateCount : Integer;
     function AbsoluteWrite(const AAbsolutePosition : Int64; const ABuffer; ASize : Integer) : Integer; virtual; abstract;
     function AbsoluteRead(const AAbsolutePosition : Int64; var ABuffer; ASize : Integer) : Integer; virtual; abstract;
     procedure DoIncreaseSize(var ANextAvailablePos, AMaxAvailablePos : Int64; ANeedSize : Integer); virtual; abstract;
@@ -130,6 +131,7 @@ Type
     procedure CheckInitialized(AWantsToWrite : Boolean);
     function IsAbstractMemInfoStable : Boolean; virtual;
     procedure SaveHeader;
+    procedure DoFinalizeUpdate; virtual;
   public
     function Write(const APosition : Int64; const ABuffer; ASize : Integer) : Integer; overload; virtual;
     function Read(const APosition : Int64; var ABuffer; ASize : Integer) : Integer; overload; virtual;
@@ -161,6 +163,8 @@ Type
     function Initialize(ASetTo64Bytes : Boolean; AMemUnitsSize : Integer) : Boolean;
     function HeaderSize : Integer;
     function SizeOfAbstractMemPosition : TAbstractMemSize; inline;
+    procedure BeginUpdate;
+    procedure EndUpdate;
   End;
 
   { TMem }
@@ -311,6 +315,11 @@ begin
   End;
 end;
 
+procedure TAbstractMem.BeginUpdate;
+begin
+  inc(FUpdateCount);
+end;
+
 procedure TAbstractMem.CheckConsistency;
 var LTotalUsedSize, LTotalUsedBlocksCount, LTotalLeaksSize, LTotalLeaksBlocksCount : Int64;
   LAbstractMemZoneInfoList : TList<TAbstractMemZoneInfo>;
@@ -399,6 +408,7 @@ var LBuffer : TBytes;
   LOk : Boolean;
   LMemUnitsSizeAux : Integer;
 begin
+  FUpdateCount := 0;
   FMemLeaks := Nil;
   FReadOnly := AReadOnly;
   LMemLeakRelativeRootPos := 0;
@@ -475,6 +485,18 @@ begin
   LZone.position := APosition;
   if Read(APosition - Int64(SizeOfAbstractMemPosition()),LZone.size,SizeOfAbstractMemPosition()) <> SizeOfAbstractMemPosition() then raise EAbstractMem.Create('Dispose: Cannot read size');
   Dispose(LZone);
+end;
+
+procedure TAbstractMem.DoFinalizeUpdate;
+begin
+  //
+end;
+
+procedure TAbstractMem.EndUpdate;
+begin
+  if FUpdateCount<=0 then raise EAbstractMem.Create('EndUpdate without BeginUpdate counterparty');
+  Dec(FUpdateCount);
+  if FUpdateCount=0 then DoFinalizeUpdate;
 end;
 
 procedure TAbstractMem.Dispose(const AAMZone: TAMZone);

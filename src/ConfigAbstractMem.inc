@@ -1,7 +1,7 @@
 {
   This file is part of AbstractMem framework
 
-  Copyright (C) 2020-2023 Albert Molina - bpascalblockchain@gmail.com
+  Copyright (C) 2020-2024 Albert Molina - bpascalblockchain@gmail.com
   
   https://github.com/PascalCoinDev/AbstractMem/  
 
@@ -88,6 +88,11 @@
     - TAbstractMemTList<TData>.OnLoadFrom
     - TAbstractMemTList<TData>.OnSaveTo
   - Some compilation warnings/hints fixed
+  
+  Version 2.2 - 2024-01-15
+  - Added TAbstractMem BeginUpdate/EndUpdate methods
+  - Added TFileMem.AutoSaveCache : Boolean property to allow auto flush and save cache after finalized a process (call to BeginUpdate/EndUpdate) or after increase file size (internal call to DoIncreaseSize) 
+  
 }
 
 const
